@@ -1,0 +1,21 @@
+# Carpetas
+temp/
+
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+
+# Entornos virtuales
+venv/
+.env/
+
+# Configuración de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de log
+*.log
+
+# Configuración de VS Code
+.vscode/
