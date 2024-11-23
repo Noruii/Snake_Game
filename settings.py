@@ -8,7 +8,7 @@ SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 # Screen caption
 pygame.display.set_caption("Snake Game!")
 
-background_menu = pygame.image.load("assets/img/Background.png")
+background_menu = pygame.image.load("assets/img/Background.png").convert()
 
 # Colores
 background_color = (0, 0, 0)

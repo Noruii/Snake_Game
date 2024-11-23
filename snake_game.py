@@ -1,7 +1,8 @@
 # Lógica del juego
 import pygame, sys, random
-from settings import SCREEN, background_color, snake_color, comida_color, menu_music, score_point_sound
-from screens import pause_menu, score
+from settings import SCREEN, background_color, snake_color, comida_color, menu_music, score_point_sound, get_font, goback_button_sound, hover_button_sound
+from button import Button
+from screens import pause_menu
 
 def play(): # Play Screen
     pygame.mixer.music.set_volume(0.20)
@@ -19,6 +20,7 @@ def play(): # Play Screen
     snake_x = SCREEN.get_width() // 2
     snake_y = SCREEN.get_height() // 2
     snake_body = [[snake_x, snake_y]]
+    global snake_length
     snake_length = 1
 
     # Dirección de movimiento
@@ -155,3 +157,87 @@ def play(): # Play Screen
         clock.tick(snake_speed)
 
         # pygame.display.update()
+
+def score(score): # Game score
+    text_score = get_font(25).render(f"Score: "+str(score), True, "White")
+    SCREEN.blit(text_score, [5, 5]) # Mostrar puntaje en la esquina superior izquierda
+    
+    text_sprint = get_font(15).render(f"Hold [SPACE] to sprint", True, "white")
+    SCREEN.blit(text_sprint, [5, 40])
+
+def game_over(): # Game Over Screen
+    pygame.mixer.music.set_volume(0.05) # Bajar el volumen de la musica en el menu de game over
+
+    alpha = 0  # Nivel de transparencia inicial (completamente transparente)
+    max_alpha = 255  # Nivel de transparencia final (completamente opaco)
+    fade_in_speed = 0.5  # Incremento de transparencia por fotograma
+    
+    you_died_sfx = pygame.mixer.Sound("assets/sound/YOU DIED.mp3")
+    sound_played = False # Variable de control para reproducir el sonido solo una vez
+
+    gato_img_surface = pygame.image.load("assets/img/Catpointing.png")
+    gato_img_surface = pygame.transform.scale(gato_img_surface, (250, 250)) # Image size
+    gato_img_surface.set_alpha(alpha) # Establecer transparencia inicial
+    gato_rect = gato_img_surface.get_rect(center=(SCREEN.get_width() // 2, SCREEN.get_height() // 4.7))
+
+    game_over_surface = get_font(100).render("YOU DIED", True, "RED")
+    game_over_surface.set_alpha(alpha)
+    game_over_rect = game_over_surface.get_rect(center=(SCREEN.get_width() // 2, SCREEN.get_height() // 2)) # Posicion del texto
+
+    try_again_button = Button(image=None, 
+                        pos=(SCREEN.get_width() // 2, 490), 
+                        text_input="Try Again", 
+                        font=get_font(50), 
+                        base_color="White", 
+                        hovering_color="Green",
+                        hover_sound=hover_button_sound())
+    menu_button = Button(image=None,
+                        pos=(SCREEN.get_width() // 2, 580),
+                        text_input="Menu",
+                        font=get_font(40),
+                        base_color="White",
+                        hovering_color="Green",
+                        hover_sound=hover_button_sound())
+
+    while True:
+        gameover_mouse_pos = pygame.mouse.get_pos()
+        SCREEN.fill("black") # Cubrir pantalla con color para cubrir el background anterior y dar la ilucion de nueva pantalla
+
+        # Dibujar el puntaje
+        score(snake_length-1)
+
+        # Reproducir el sonido solo si no se ha reproducido antes
+        if not sound_played:
+            you_died_sfx.play()
+            you_died_sfx.set_volume(0.15)
+            sound_played = True  # Actualizar la bandera para evitar que se reproduzca nuevamente
+
+        # Mostrar texto con transparencia
+        if alpha < max_alpha:
+            alpha += fade_in_speed  # Incrementar transparencia
+            alpha = min(alpha, max_alpha)  # Asegurar que no supere el máximo
+            gato_img_surface.set_alpha(alpha)
+            game_over_surface.set_alpha(alpha)  # Actualizar transparencia
+        SCREEN.blit(gato_img_surface, gato_rect) # Dibujar Gato
+        SCREEN.blit(game_over_surface, game_over_rect)  # Dibujar el texto
+
+        for button in [try_again_button, menu_button]:
+            button.changeColor(gameover_mouse_pos)
+            button.update(SCREEN)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if try_again_button.checkForInput(gameover_mouse_pos):
+                    you_died_sfx.stop()
+                    return "PLAY"
+                elif menu_button.checkForInput(gameover_mouse_pos):
+                    you_died_sfx.stop()
+                    pygame.mixer.music.stop()
+                    goback_button_sound()
+                    menu_music() # Play menu music
+                    return "MAIN_MENU"
+
+        pygame.display.update()
